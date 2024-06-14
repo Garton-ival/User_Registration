@@ -2,6 +2,7 @@ package org.pahappa.systems.registrationapp.services;
 
 import org.pahappa.systems.registrationapp.dao.UserDAO;
 import org.pahappa.systems.registrationapp.models.User;
+import org.pahappa.systems.registrationapp.exception.UserRegistrationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +19,7 @@ public class UserService {
         try {
             userDAO.save(user);
             return true;
-        } catch (IllegalArgumentException e) {
+        } catch (UserRegistrationException e) {
             System.out.println("Failed to add user: " + e.getMessage());
             return false;
         }
@@ -37,16 +38,26 @@ public class UserService {
 
     // Update user details
     public boolean updateUser(User updatedUser) {
-        userDAO.update(updatedUser);
-        return true;
+        try {
+            userDAO.update(updatedUser);
+            return true;
+        } catch (UserRegistrationException e) {
+            System.out.println("Failed to update user: " + e.getMessage());
+            return false;
+        }
     }
 
     // Delete a user by Username
     public boolean deleteUserByUsername(String username) {
         Optional<User> optionalUser = getUserByUsername(username);
         if (optionalUser.isPresent()) {
-            userDAO.delete(optionalUser.get());
-            return true;
+            try {
+                userDAO.delete(optionalUser.get());
+                return true;
+            } catch (UserRegistrationException e) {
+                System.out.println("Failed to delete user: " + e.getMessage());
+                return false;
+            }
         }
         return false;
     }
@@ -55,7 +66,11 @@ public class UserService {
     public void deleteAllUsers() {
         List<User> users = getAllUsers();
         for (User user : users) {
-            userDAO.delete(user);
+            try {
+                userDAO.delete(user);
+            } catch (UserRegistrationException e) {
+                System.out.println("Failed to delete user: " + e.getMessage());
+            }
         }
     }
 

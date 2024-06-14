@@ -6,6 +6,7 @@ import org.hibernate.Transaction;
 import org.hibernate.Query;
 import org.pahappa.systems.registrationapp.config.SessionConfiguration;
 import org.pahappa.systems.registrationapp.models.User;
+import org.pahappa.systems.registrationapp.exception.UserRegistrationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,13 +30,13 @@ public class UserDAO {
                 session.save(user);
                 transaction.commit();
             } else {
-                throw new IllegalArgumentException("Username " + user.getUsername() + " already exists.");
+                throw new UserRegistrationException("Username " + user.getUsername() + " already exists.");
             }
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            throw new UserRegistrationException("Failed to save user: " + e.getMessage());
         } finally {
             session.close();
         }
@@ -52,7 +53,7 @@ public class UserDAO {
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            throw new UserRegistrationException("Failed to update user: " + e.getMessage());
         } finally {
             session.close();
         }
@@ -69,7 +70,7 @@ public class UserDAO {
             if (transaction != null) {
                 transaction.rollback();
             }
-            e.printStackTrace();
+            throw new UserRegistrationException("Failed to delete user: " + e.getMessage());
         } finally {
             session.close();
         }

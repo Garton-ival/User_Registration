@@ -2,6 +2,7 @@ package org.pahappa.systems.registrationapp.views;
 
 import org.pahappa.systems.registrationapp.models.User;
 import org.pahappa.systems.registrationapp.services.UserService;
+import org.pahappa.systems.registrationapp.exception.UserRegistrationException;
 
 import java.text.ParseException;
 import java.util.Scanner;
@@ -73,68 +74,64 @@ public class UserView {
     }
 
     private void registerUser() {
-        // Get and validate username
-        System.out.println("Enter username:");
-        String username = scanner.nextLine();
-        if (username.isEmpty()) {
-            System.out.println("Username cannot be empty.");
-            return;
-        }
-        Optional<User> existingUser = userService.getUserByUsername(username);
-        if (existingUser.isPresent()) {
-            System.out.println("Username already exists.");
-            return;
-        }
-        if (username.matches("\\d+")) {
-            System.out.println("Username cannot be a number.");
-            return;
-        }
-
-        // Get and validate first name
-        System.out.println("Enter first name:");
-        String firstname = scanner.nextLine();
-        if (firstname.isEmpty() || firstname.trim().isEmpty() || firstname.matches("\\d+")) {
-            System.out.println("First name cannot be empty or a number.");
-            return;
-        }
-
-        // Get and validate last name
-        System.out.println("Enter last name:");
-        String lastname = scanner.nextLine();
-        if (lastname.isEmpty() || lastname.trim().isEmpty() || lastname.matches("\\d+")) {
-            System.out.println("Last name cannot be empty or a number.");
-            return;
-        }
-
-        // Get and validate date of birth
-        System.out.println("Enter date of birth (dd/MM/yyyy):");
-        String dob;
-        dob = scanner.nextLine();
-        Date dateOfBirth;
         try {
-            dateOfBirth = dateFormat.parse(dob);
-            if (dateOfBirth.after(new Date())) {
-                System.out.println("Date of birth cannot be in the future.");
-                return;
+            // Get and validate username
+            System.out.println("Enter username:");
+            String username = scanner.nextLine();
+            if (username.isEmpty()) {
+                throw new UserRegistrationException("Username cannot be empty.");
             }
-        } catch (ParseException e) {
-            System.out.println("Invalid date format. Please use dd/MM/yyyy format.");
-            return;
-        }
+            if (userService.getUserByUsername(username).isPresent()) {
+                throw new UserRegistrationException("Username already exists");
+            }
+            if (username.matches("\\d+")) {
+                throw new UserRegistrationException("Username cannot be a number");
+            }
 
-        // Create and add the user
-        User user = new User(username, firstname, lastname, dateOfBirth);
-        if (userService.addUser(user)) {
-            System.out.println("User registered successfully.");
-        } else {
-            System.out.println("User registration failed.");
+            // Get and validate first name
+            System.out.println("Enter first name:");
+            String firstname = scanner.nextLine();
+            if (firstname.isEmpty() || firstname.trim().isEmpty() || firstname.matches("\\d+")) {
+                throw new UserRegistrationException("First name cannot be empty or a number.");
+            }
+
+            // Get and validate last name
+            System.out.println("Enter last name:");
+            String lastname = scanner.nextLine();
+            if (lastname.isEmpty() || lastname.trim().isEmpty() || lastname.matches("\\d+")) {
+                throw new UserRegistrationException("Last name cannot be empty or a number.");
+            }
+
+            // Get and validate date of birth
+            System.out.println("Enter date of birth (dd/MM/yyyy):");
+            String dob;
+            dob = scanner.nextLine();
+            Date dateOfBirth;
+            try {
+                dateOfBirth = dateFormat.parse(dob);
+                if (dateOfBirth.after(new Date())) {
+                    throw new UserRegistrationException("Date of birth cannot be in the future.");
+                }
+            } catch (ParseException e) {
+                throw new UserRegistrationException("Invalid date format. Please use dd/MM/yyyy.");
+            }
+
+            // Create and add the user
+            User user = new User(username, firstname, lastname, dateOfBirth);
+            if (userService.addUser(user)) {
+                System.out.println("User registered successfully.");
+            } else {
+                System.out.println("User registration failed.");
+            }
+        } catch (UserRegistrationException e){
+            System.out.println(e.getMessage());
         }
     }
 
     private void displayAllUsers() {
         List<User> users = userService.getAllUsers();
         if (users.isEmpty()) {
-            System.out.println("No users registered.");
+            System.out.println("No users found.");
         } else {
             for (User user : users) {
                 System.out.println("ID: " + user.getId() +
@@ -164,55 +161,55 @@ public class UserView {
     }
 
     private void updateUserByUsername() {
-        System.out.println("Enter username to update:");
-        String username = scanner.nextLine();
+        try {
+            System.out.println("Enter username to update:");
+            String username = scanner.nextLine();
 
-        Optional<User> optionalUser = userService.getUserByUsername(username);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
+            Optional<User> optionalUser = userService.getUserByUsername(username);
+            if (optionalUser.isPresent()) {
+                User user = optionalUser.get();
 
-            // Get and validate new first name
-            System.out.println("Enter new first name:");
-            String firstname = scanner.nextLine();
-            if (firstname.isEmpty() || firstname.trim().isEmpty() || firstname.matches("\\d+")) {
-                System.out.println("First name cannot be empty or a number.");
-                return;
-            }
-
-            // Get and validate new last name
-            System.out.println("Enter new last name:");
-            String lastname = scanner.nextLine();
-            if (lastname.isEmpty() || lastname.trim().isEmpty() || lastname.matches("\\d+")) {
-                System.out.println("Last name cannot be empty or a number.");
-                return;
-            }
-
-            // Get and validate new date of birth
-            System.out.println("Enter new date of birth (dd/MM/yyyy):");
-            String dob = scanner.nextLine();
-            Date dateOfBirth;
-            try {
-                dateOfBirth = dateFormat.parse(dob);
-                if (dateOfBirth.after(new Date())) {
-                    System.out.println("Date of birth cannot be in the future.");
-                    return;
+                // Get and validate new first name
+                System.out.println("Enter new first name:");
+                String firstname = scanner.nextLine();
+                if (firstname.isEmpty() || firstname.trim().isEmpty() || firstname.matches("\\d+")) {
+                    throw new UserRegistrationException("First name cannot be empty or a number.");
                 }
-            } catch (ParseException e) {
-                System.out.println("Invalid date format. Please use dd/MM/yyyy format.");
-                return;
-            }
 
-            // Update user details
-            user.setFirstname(firstname);
-            user.setLastname(lastname);
-            user.setDateOfBirth(dateOfBirth);
-            if (userService.updateUser(user)) {
-                System.out.println("User updated successfully.");
+                // Get and validate new last name
+                System.out.println("Enter new last name:");
+                String lastname = scanner.nextLine();
+                if (lastname.isEmpty() || lastname.trim().isEmpty() || lastname.matches("\\d+")) {
+                    throw new UserRegistrationException("Last name cannot be empty or a number.");
+                }
+
+                // Get and validate new date of birth
+                System.out.println("Enter new date of birth (dd/MM/yyyy):");
+                String dob = scanner.nextLine();
+                Date dateOfBirth;
+                try {
+                    dateOfBirth = dateFormat.parse(dob);
+                    if (dateOfBirth.after(new Date())) {
+                        throw new UserRegistrationException("Date of birth cannot be in the future.");
+                    }
+                } catch (ParseException e) {
+                    throw new UserRegistrationException("Invalid date format. Please use dd/MM/yyyy format.");
+                }
+
+                // Update user details
+                user.setFirstname(firstname);
+                user.setLastname(lastname);
+                user.setDateOfBirth(dateOfBirth);
+                if (userService.updateUser(user)) {
+                    System.out.println("User updated successfully.");
+                } else {
+                    System.out.println("User update failed.");
+                }
             } else {
-                System.out.println("User update failed.");
+                System.out.println("User not found.");
             }
-        } else {
-            System.out.println("User not found.");
+        } catch (UserRegistrationException e){
+            System.out.println(e.getMessage());
         }
     }
 
