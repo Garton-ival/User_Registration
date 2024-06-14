@@ -3,23 +3,24 @@ package org.pahappa.systems.registrationapp.views;
 import org.pahappa.systems.registrationapp.models.User;
 import org.pahappa.systems.registrationapp.services.UserService;
 
+import java.text.ParseException;
 import java.util.Scanner;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.lang.reflect.Constructor;
 
 public class UserView {
 
     private final Scanner scanner;
     private final UserService userService;
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
     public UserView(){
 
         this.scanner = new Scanner(System.in);
         this.userService = new UserService();
+        this.dateFormat = new SimpleDateFormat("dd/MM/yyyy");
     }
 
 
@@ -31,8 +32,8 @@ public class UserView {
             System.out.println("\nChoose an operation:");
             System.out.println("1. Register a user");
             System.out.println("2. Display all users");
-            System.out.println("3. Get a user of username");
-            System.out.println("4. Update user details of username");
+            System.out.println("3. Get a user by username");
+            System.out.println("4. Update user details by username");
             System.out.println("5. Delete User of username");
             System.out.println("6. Delete all users");
             System.out.println("7. Exit");
@@ -47,13 +48,13 @@ public class UserView {
                         displayAllUsers();
                         break;
                     case 3:
-                        getUserOfUsername();
+                        getUserByUsername();
                         break;
                     case 4:
-                        updateUserOfUsername();
+                        updateUserByUsername();
                         break;
                     case 5:
-                        deleteUserOfUsername();
+                        deleteUserByUsername();
                         break;
                     case 6:
                         deleteAllUsers();
@@ -79,11 +80,13 @@ public class UserView {
             System.out.println("Username cannot be empty.");
             return;
         }
+        Optional<User> existingUser = userService.getUserByUsername(username);
+        if (existingUser.isPresent()) {
+            System.out.println("Username already exists.");
+            return;
+        }
         if (username.matches("\\d+")) {
             System.out.println("Username cannot be a number.");
-            return;
-        }       if (userService.getUserByUsername(username).isPresent()) {
-            System.out.println("Username already exists.");
             return;
         }
 
@@ -114,23 +117,17 @@ public class UserView {
                 System.out.println("Date of birth cannot be in the future.");
                 return;
             }
-        } catch (Exception e) {
+        } catch (ParseException e) {
             System.out.println("Invalid date format. Please use dd/MM/yyyy format.");
             return;
         }
 
-        // Create and add the user using reflection to access the private constructor
-        try {
-            Constructor<User> constructor = User.class.getDeclaredConstructor(String.class, String.class, String.class, Date.class);
-            constructor.setAccessible(true); // Make the private constructor accessible
-            User user = constructor.newInstance(username, firstname, lastname, dateOfBirth);
-            if (userService.addUser(user)) {
-                System.out.println("User registered successfully.");
-            } else {
-                System.out.println("User registration failed.");
-            }
-        } catch (Exception e) {
-            System.out.println("Error creating user: " + e.getMessage());
+        // Create and add the user
+        User user = new User(username, firstname, lastname, dateOfBirth);
+        if (userService.addUser(user)) {
+            System.out.println("User registered successfully.");
+        } else {
+            System.out.println("User registration failed.");
         }
     }
 
@@ -140,7 +137,8 @@ public class UserView {
             System.out.println("No users registered.");
         } else {
             for (User user : users) {
-                System.out.println("Username: " + user.getUsername() +
+                System.out.println("ID: " + user.getId() +
+                        ", Username: " + user.getUsername() +
                         ", First Name: " + user.getFirstname() +
                         ", Last Name: " + user.getLastname() +
                         ", Date of Birth: " + dateFormat.format(user.getDateOfBirth()));
@@ -148,11 +146,13 @@ public class UserView {
         }
     }
 
-    private void getUserOfUsername() {
+    private void getUserByUsername() {
         System.out.println("Enter username:");
         String username = scanner.nextLine();
+
         Optional<User> userOptional = userService.getUserByUsername(username);
         userOptional.ifPresent(user -> {
+            System.out.println("ID: " + user.getId());
             System.out.println("Username: " + user.getUsername());
             System.out.println("First Name: " + user.getFirstname());
             System.out.println("Last Name: " + user.getLastname());
@@ -161,12 +161,12 @@ public class UserView {
         if (userOptional.isEmpty()) {
             System.out.println("User not found.");
         }
-
     }
 
-    private void updateUserOfUsername() {
-        System.out.println("Enter username of the user to update:");
+    private void updateUserByUsername() {
+        System.out.println("Enter username to update:");
         String username = scanner.nextLine();
+
         Optional<User> optionalUser = userService.getUserByUsername(username);
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
@@ -197,7 +197,7 @@ public class UserView {
                     System.out.println("Date of birth cannot be in the future.");
                     return;
                 }
-            } catch (Exception e) {
+            } catch (ParseException e) {
                 System.out.println("Invalid date format. Please use dd/MM/yyyy format.");
                 return;
             }
@@ -216,15 +216,16 @@ public class UserView {
         }
     }
 
-    private void deleteUserOfUsername() {
-        System.out.println("Enter username of the user to delete:");
+    private void deleteUserByUsername() {
+        System.out.println("Enter username to delete:");
         String username = scanner.nextLine();
+
         Optional<User> user = userService.getUserByUsername(username);
         if (user.isPresent()) {
             System.out.println("Are you sure you want to delete this user? (yes/no)");
             String confirmation = scanner.nextLine();
             if (confirmation.equalsIgnoreCase("yes")) {
-                if (userService.deleteUser(username)) {
+                if (userService.deleteUserByUsername(username)) {
                     System.out.println("User deleted successfully.");
                 } else {
                     System.out.println("User deletion failed.");

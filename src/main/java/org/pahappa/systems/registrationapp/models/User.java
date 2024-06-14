@@ -1,24 +1,47 @@
 package org.pahappa.systems.registrationapp.models;
 
+import javax.persistence.*;
 import java.util.Date;
 import java.util.Objects;
 
+@Entity
+@Table(name = "users")
 public class User {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
     private String username;
+
+    @Column(nullable = false)
     private String firstname;
+
+    @Column(nullable = false)
     private String lastname;
+
+    @Temporal(TemporalType.DATE)
+    @Column(nullable = false)
     private Date dateOfBirth;
 
     public User(){
 
     }
 
-    private User(String username, String firstname, String lastname, Date dateOfBirth){
+    public User(String username, String firstname, String lastname, Date dateOfBirth){
         this.username = username;
         this.firstname = firstname;
         this.lastname = lastname;
         this.dateOfBirth = dateOfBirth;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getUsername() {
