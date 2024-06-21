@@ -1,0 +1,6 @@
+org\pahappa\systems\registrationapp\dao\UserDAO.class
+org\pahappa\systems\registrationapp\RegistrationApp.class
+org\pahappa\systems\registrationapp\models\User.class
+org\pahappa\systems\registrationapp\views\UserView.class
+org\pahappa\systems\registrationapp\config\SessionConfiguration.class
+org\pahappa\systems\registrationapp\services\UserService.class
